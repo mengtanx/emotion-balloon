@@ -1,30 +1,166 @@
-# Emotion Balloon
+# 情绪气球 - 释放你的情绪
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+一个温暖的情绪支持和记录平台，帮助用户安全地表达和释放情绪，通过AI伙伴获得陪伴和支持。
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/mengtanxs-projects/v0-emotion-balloon)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/QnkAGy4ZAUc)
+## 🌟 主要功能
 
-## Overview
+### 1. 智能情绪释放 🎈
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+- **多轮对话支持**：与AI心灵伙伴进行深度情绪对话
+- **实时打字机效果**：AI回复采用流式响应，模拟真实对话体验
+- **可选择释放**：用户可以选择何时释放情绪气球，或继续对话
+- **情绪气球动画**：美观的气球释放动画效果
 
-## Deployment
+### 2. 自定义情绪管理 🎨
 
-Your project is live at:
+- **内置情绪类型**：愤怒、悲伤、焦虑、快乐、平静、困惑
+- **自定义情绪**：支持用户添加个性化的情绪类型
+- **颜色选择**：为自定义情绪选择专属渐变色
+- **情绪管理**：可以删除不需要的自定义情绪
 
-**[https://vercel.com/mengtanxs-projects/v0-emotion-balloon](https://vercel.com/mengtanxs-projects/v0-emotion-balloon)**
+### 3. 苹果风格日历 📅
 
-## Build your app
+- **现代化设计**：参考苹果设计风格的美观日历界面
+- **情绪指示器**：日历中以彩色圆点显示每日情绪状态
+- **月份导航**：流畅的月份切换动画
+- **今日标记**：清晰标识今天的日期
+- **悬停效果**：鼠标悬停显示情绪名称
 
-Continue building your app on:
+### 4. 详细记录侧边栏 📝
 
-**[https://v0.dev/chat/projects/QnkAGy4ZAUc](https://v0.dev/chat/projects/QnkAGy4ZAUc)**
+- **滑动展示**：点击日期后从右侧滑出详细信息
+- **完整对话记录**：显示该日期的所有情绪对话
+- **时间轴展示**：按时间顺序显示消息
+- **释放状态**：清晰标识哪些气球已被释放
+- **统计信息**：显示对话数量和时间信息
 
-## How It Works
+### 5. 数据统计看板 📊
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+- **总体统计**：总对话数、记录天数、已释放气球数
+- **最近趋势**：展示最近7次的情绪记录趋势
+- **情绪图例**：完整的情绪类型和颜色对照
+- **可视化展示**：直观的图标和数据展示
+
+## 🎯 用户体验优化
+
+### 流式AI回复
+
+- 采用Server-Sent Events (SSE)实现流式响应
+- 真实的打字机效果，增强对话真实感
+- 降低用户等待时的焦虑感
+
+### 多轮对话支持
+
+- 支持连续的情绪对话交流
+- AI记忆对话历史，提供连贯的支持
+- 用户可自主选择何时结束对话
+
+### 响应式设计
+
+- 完全适配移动设备和桌面端
+- 触摸友好的交互设计
+- 流畅的动画和转场效果
+
+## 🛠 技术栈
+
+- **前端框架**：Next.js 15.2.4 + React 19
+- **UI组件库**：Shadcn UI + Radix UI
+- **样式框架**：Tailwind CSS
+- **动画库**：Framer Motion
+- **图标库**：Lucide React
+- **AI服务**：OpenRouter API (DeepSeek模型)
+- **部署平台**：Vercel
+
+## 📱 页面结构
+
+### 首页 (`/`)
+
+- 欢迎界面和功能介绍
+- 快速导航到主要功能
+
+### 情绪释放 (`/release`)
+
+- 情绪气球选择界面
+- 自定义情绪管理
+- 多轮AI对话系统
+- 气球释放动画
+
+### 情绪记录 (`/records`)
+
+- 苹果风格日历展示
+- 统计数据看板
+- 详细记录侧边栏
+- 情绪趋势分析
+
+### 关于页面 (`/about`)
+
+- 项目介绍和使用指南
+
+## 🔧 本地开发
+
+```bash
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm run dev
+
+# 构建项目
+npm run build
+
+# 启动生产服务器
+npm start
+```
+
+## 🌐 环境变量
+
+```env
+OPENROUTER_API_KEY=your_openrouter_api_key
+```
+
+## 🎨 设计亮点
+
+### 颜色主题
+
+- 主色调：蓝色到紫色的渐变
+- 背景：柔和的多色渐变
+- 情绪色彩：丰富的情绪表达色彩
+
+### 交互动画
+
+- 页面切换的淡入淡出
+- 按钮的缩放反馈
+- 气球释放的飞行动画
+- 侧边栏的滑动展示
+
+### 用户体验
+
+- 直观的情绪选择界面
+- 温馨的对话体验
+- 清晰的数据可视化
+- 流畅的操作反馈
+
+## 🚀 部署说明
+
+项目已部署在 Vercel 平台：
+
+- **生产地址**：https://v0-emotion-balloon.vercel.app/
+- **自动部署**：推送到main分支自动触发部署
+- **环境配置**：在Vercel控制台配置环境变量
+
+## 📈 未来规划
+
+- [ ] 情绪数据导出功能
+- [ ] 更多AI模型选择
+- [ ] 情绪分析报告
+- [ ] 社区分享功能
+- [ ] 推送通知提醒
+- [ ] 多语言支持
+
+## 💝 致谢
+
+感谢所有为情绪健康关注做出贡献的人们。这个项目旨在为需要情绪支持的用户提供一个安全、温暖的数字空间。
+
+---
+
+**记住：每一种情绪都是有意义的，你的感受值得被理解和关爱。** ❤️
