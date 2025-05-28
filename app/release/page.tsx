@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, Send, Loader2, MessageCircle, CheckCircle, RotateCcw } from "lucide-react"
+import { ArrowLeft, Send, Loader2, MessageCircle, CheckCircle, RotateCcw, Calendar } from "lucide-react"
 import Link from "next/link"
 import { Typewriter } from "@/components/ui/typewriter"
 import { CustomEmotionManager } from "@/components/custom-emotion-manager"
@@ -26,6 +26,8 @@ export default function ReleasePage() {
   const [isTyping, setIsTyping] = useState(false)
   const [showReleaseOptions, setShowReleaseOptions] = useState(false)
   const [hasSelectedEmotion, setHasSelectedEmotion] = useState(false)
+  const [showBalloonAnimation, setShowBalloonAnimation] = useState(false)
+  const [balloonReleased, setBalloonReleased] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -184,30 +186,133 @@ export default function ReleasePage() {
   const releaseBalloon = () => {
     if (!conversation) return
 
-    const releasedConversation = {
-      ...conversation,
-      isReleased: true,
-      updatedAt: new Date().toISOString(),
-    }
-
-    setConversation(releasedConversation)
-    saveEmotionConversation(releasedConversation)
+    // 启动气球动画
+    setShowBalloonAnimation(true)
     setShowReleaseOptions(false)
+
+    // 动画完成后更新状态
+    setTimeout(() => {
+      const releasedConversation = {
+        ...conversation,
+        isReleased: true,
+        updatedAt: new Date().toISOString(),
+      }
+
+      setConversation(releasedConversation)
+      saveEmotionConversation(releasedConversation)
+      setBalloonReleased(true)
+      setShowBalloonAnimation(false)
+    }, 3000) // 3秒动画时间
   }
 
   const resetConversation = () => {
     setConversation(null)
     setCurrentAiResponse("")
-    setSelectedEmotion("")
-    setEmotionText("")
-    setHasSelectedEmotion(false)
     setShowReleaseOptions(false)
-    setIsTyping(false)
-    setIsLoading(false)
+    setHasSelectedEmotion(false)
+    setShowBalloonAnimation(false)
+    setBalloonReleased(false)
+    setSelectedEmotion("")
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-50 to-pink-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-50 to-pink-100 relative overflow-hidden">
+      {/* Balloon Release Animation */}
+      <AnimatePresence>
+        {showBalloonAnimation && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 pointer-events-none"
+          >
+            {/* 气球动画 */}
+            <motion.div
+              initial={{ x: "50%", y: "80%", scale: 1 }}
+              animate={{ 
+                x: "50%", 
+                y: "-20%", 
+                scale: [1, 1.2, 0],
+                rotate: [0, 5, -5, 10, -10, 0]
+              }}
+              transition={{ 
+                duration: 3,
+                times: [0, 0.7, 1],
+                ease: "easeOut"
+              }}
+              className="absolute left-1/2 transform -translate-x-1/2"
+            >
+              <div
+                className={`w-24 h-30 bg-gradient-to-b ${
+                  emotionTypes.find(e => e.value === selectedEmotion)?.color
+                } rounded-full shadow-2xl relative overflow-hidden`}
+              >
+                <div className="w-3 h-12 bg-gray-400 mx-auto absolute bottom-0 left-1/2 transform -translate-x-1/2"></div>
+                <div className="absolute top-3 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white/50 rounded-full"></div>
+                
+                {/* 爆炸效果 */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: [0, 1, 0], scale: [0, 3, 5] }}
+                  transition={{ delay: 2.5, duration: 0.5 }}
+                  className="absolute inset-0 bg-gradient-to-r from-yellow-300 via-orange-300 to-red-300 rounded-full"
+                />
+              </div>
+            </motion.div>
+
+            {/* 漂浮粒子效果 */}
+            {[...Array(12)].map((_, i) => (
+              <motion.div
+                key={i}
+                initial={{ 
+                  x: "50%", 
+                  y: "50%", 
+                  scale: 0,
+                  opacity: 0
+                }}
+                animate={{ 
+                  x: `${50 + (Math.random() - 0.5) * 100}%`,
+                  y: `${20 + Math.random() * 60}%`,
+                  scale: [0, 1, 0],
+                  opacity: [0, 1, 0]
+                }}
+                transition={{ 
+                  delay: 2.5 + i * 0.1,
+                  duration: 1.5,
+                  ease: "easeOut"
+                }}
+                className="absolute w-2 h-2 bg-gradient-to-r from-pink-300 to-purple-300 rounded-full"
+              />
+            ))}
+
+            {/* 文字提示 */}
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ delay: 1 }}
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center"
+            >
+              <motion.h2
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                className="text-3xl font-bold text-gray-800 mb-2"
+              >
+                情绪正在释放...
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.5 }}
+                className="text-gray-600"
+              >
+                让它飘向天空，拥抱内心的平静
+              </motion.p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="p-6 flex items-center justify-between">
         <Link href="/">
@@ -324,9 +429,9 @@ export default function ReleasePage() {
                   <motion.p
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-green-600 font-medium"
+                    className="text-green-600 font-medium flex items-center justify-center gap-2"
                   >
-                    气球已释放 - 情绪已得到释放 🎈
+                    🎈 气球已释放 - 情绪已得到释放，愿你内心平静
                   </motion.p>
                 )}
               </div>
@@ -448,6 +553,47 @@ export default function ReleasePage() {
                     </Button>
                   </div>
                 </div>
+              )}
+
+              {/* 释放完成后的操作 */}
+              {conversation?.isReleased && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 shadow-lg text-center"
+                >
+                  <div className="mb-6">
+                    <div className="w-16 h-16 bg-gradient-to-r from-green-400 to-blue-400 rounded-full mx-auto mb-4 flex items-center justify-center">
+                      <CheckCircle className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-semibold text-gray-800 mb-2">
+                      情绪释放完成
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      你的情绪已经随着气球飘向天空。记住，每一种情绪都有它存在的意义，
+                      感谢你愿意面对和释放它们。
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      你可以随时回来记录新的情绪，我们永远在这里陪伴你。
+                    </p>
+                  </div>
+                  
+                  <div className="flex gap-4 justify-center">
+                    <Button
+                      onClick={resetConversation}
+                      className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      重新开始
+                    </Button>
+                    <Link href="/records">
+                      <Button variant="outline">
+                        <Calendar className="w-4 h-4 mr-2" />
+                        查看记录
+                      </Button>
+                    </Link>
+                  </div>
+                </motion.div>
               )}
             </motion.div>
           )}

@@ -5,6 +5,7 @@ import { X, MessageCircle, Calendar, Clock, CheckCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { getEmotionName, getConversationsByDate, EmotionConversation } from "@/lib/emotion-utils"
+import Link from "next/link"
 
 interface EmotionDetailSidebarProps {
   selectedDate: string | null
@@ -147,10 +148,12 @@ export function EmotionDetailSidebar({ selectedDate, onClose }: EmotionDetailSid
                     在这个日期还没有情绪记录或对话
                   </p>
                   <Button
-                    onClick={onClose}
+                    asChild
                     className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
                   >
-                    开始记录情绪
+                    <Link href="/release">
+                      开始记录情绪
+                    </Link>
                   </Button>
                 </motion.div>
               )}

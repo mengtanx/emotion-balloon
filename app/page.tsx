@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Heart, Calendar, Info, Sparkles } from "lucide-react"
 import Link from "next/link"
+import { EmotionHeatmap } from "@/components/ui/emotion-heatmap"
 
 export default function HomePage() {
   const [showWelcome, setShowWelcome] = useState(true)
@@ -59,6 +60,22 @@ export default function HomePage() {
           </motion.div>
         </motion.div>
       )}
+
+      {/* Emotion Heatmap */}
+      <div className="container mx-auto px-6 py-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg mb-8"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Calendar className="w-5 h-5 text-gray-600" />
+            <h3 className="text-lg font-semibold text-gray-800">情绪历史</h3>
+          </div>
+          <EmotionHeatmap />
+        </motion.div>
+      </div>
 
       {/* Main Content */}
       <div className="container mx-auto px-6 py-12">
