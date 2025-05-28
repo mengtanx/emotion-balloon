@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft, Send, Loader2, MessageCircle, CheckCircle, RotateCcw, Calendar } from "lucide-react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { Typewriter } from "@/components/ui/typewriter"
 import { CustomEmotionManager } from "@/components/custom-emotion-manager"
 import { 
@@ -17,6 +18,9 @@ import {
 } from "@/lib/emotion-utils"
 
 export default function ReleasePage() {
+  const searchParams = useSearchParams()
+  const selectedDate = searchParams.get('date') // 获取URL中的date参数
+  
   const [emotionTypes, setEmotionTypes] = useState(getEmotionTypes())
   const [selectedEmotion, setSelectedEmotion] = useState("")
   const [emotionText, setEmotionText] = useState("")
@@ -42,8 +46,22 @@ export default function ReleasePage() {
     setEmotionTypes(getEmotionTypes())
   }
 
+  // 获取用于创建对话的日期
+  const getConversationDate = () => {
+    if (selectedDate) {
+      // 如果有选择的日期，使用该日期的当天时间
+      const date = new Date(selectedDate)
+      date.setHours(new Date().getHours(), new Date().getMinutes(), new Date().getSeconds())
+      return date.toISOString()
+    }
+    // 否则使用当前时间
+    return new Date().toISOString()
+  }
+
   const startConversation = () => {
     if (!selectedEmotion || !emotionText.trim()) return
+
+    const conversationDate = getConversationDate()
 
     const newConversation: EmotionConversation = {
       id: generateConversationId(),
@@ -52,12 +70,12 @@ export default function ReleasePage() {
         {
           type: 'user',
           content: emotionText,
-          timestamp: new Date().toISOString(),
+          timestamp: conversationDate,
         }
       ],
       isReleased: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: conversationDate,
+      updatedAt: conversationDate,
     }
 
     setConversation(newConversation)
@@ -389,6 +407,19 @@ export default function ReleasePage() {
               <div className="text-center mb-8">
                 <h1 className="text-4xl font-bold text-gray-800 mb-4">释放你的情绪</h1>
                 <p className="text-gray-600">选择一个代表你当前情绪的气球，然后告诉我你的感受</p>
+                {selectedDate && (
+                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-blue-700 text-sm flex items-center justify-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      正在为 {new Date(selectedDate).toLocaleDateString('zh-CN', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        weekday: 'long'
+                      })} 记录情绪
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* 情绪气球选择 */}

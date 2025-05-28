@@ -151,7 +151,7 @@ export function EmotionDetailSidebar({ selectedDate, onClose }: EmotionDetailSid
                     asChild
                     className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
                   >
-                    <Link href="/release">
+                    <Link href={`/release?date=${selectedDate}`}>
                       开始记录情绪
                     </Link>
                   </Button>
