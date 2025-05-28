@@ -1,100 +1,240 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, Send, Loader2 } from "lucide-react"
+import { ArrowLeft, Send, Loader2, MessageCircle, CheckCircle, RotateCcw } from "lucide-react"
 import Link from "next/link"
-
-const emotionColors = [
-  { name: "愤怒", color: "from-red-400 to-red-600", value: "anger" },
-  { name: "悲伤", color: "from-blue-400 to-blue-600", value: "sadness" },
-  { name: "焦虑", color: "from-yellow-400 to-orange-500", value: "anxiety" },
-  { name: "快乐", color: "from-green-400 to-green-600", value: "happiness" },
-  { name: "平静", color: "from-purple-400 to-purple-600", value: "calm" },
-  { name: "困惑", color: "from-gray-400 to-gray-600", value: "confusion" },
-]
+import { Typewriter } from "@/components/ui/typewriter"
+import { CustomEmotionManager } from "@/components/custom-emotion-manager"
+import { 
+  getEmotionTypes, 
+  EmotionConversation, 
+  ConversationMessage, 
+  saveEmotionConversation,
+  generateConversationId 
+} from "@/lib/emotion-utils"
 
 export default function ReleasePage() {
+  const [emotionTypes, setEmotionTypes] = useState(getEmotionTypes())
   const [selectedEmotion, setSelectedEmotion] = useState("")
   const [emotionText, setEmotionText] = useState("")
-  const [isReleasing, setIsReleasing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [aiResponse, setAiResponse] = useState("")
-  const [showResponse, setShowResponse] = useState(false)
+  const [conversation, setConversation] = useState<EmotionConversation | null>(null)
+  const [currentAiResponse, setCurrentAiResponse] = useState("")
+  const [isTyping, setIsTyping] = useState(false)
+  const [showReleaseOptions, setShowReleaseOptions] = useState(false)
+  const [hasSelectedEmotion, setHasSelectedEmotion] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const handleRelease = async () => {
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [conversation?.messages, currentAiResponse])
+
+  const refreshEmotionTypes = () => {
+    setEmotionTypes(getEmotionTypes())
+  }
+
+  const startConversation = () => {
     if (!selectedEmotion || !emotionText.trim()) return
 
-    setIsReleasing(true)
-    setIsLoading(true)
-
-    // 保存情绪记录到 localStorage
-    const today = new Date().toISOString().split("T")[0]
-    const existingRecords = JSON.parse(localStorage.getItem("emotionRecords") || "{}")
-    existingRecords[today] = {
+    const newConversation: EmotionConversation = {
+      id: generateConversationId(),
       emotion: selectedEmotion,
-      text: emotionText,
+      messages: [
+        {
+          type: 'user',
+          content: emotionText,
+          timestamp: new Date().toISOString(),
+        }
+      ],
+      isReleased: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+
+    setConversation(newConversation)
+    setHasSelectedEmotion(true)
+    setEmotionText("")
+    sendMessageToAI(newConversation)
+  }
+
+  const sendMessage = () => {
+    if (!emotionText.trim() || !conversation) return
+
+    const userMessage: ConversationMessage = {
+      type: 'user',
+      content: emotionText,
       timestamp: new Date().toISOString(),
     }
-    localStorage.setItem("emotionRecords", JSON.stringify(existingRecords))
+
+    const updatedConversation = {
+      ...conversation,
+      messages: [...conversation.messages, userMessage],
+      updatedAt: new Date().toISOString(),
+    }
+
+    setConversation(updatedConversation)
+    setEmotionText("")
+    sendMessageToAI(updatedConversation)
+  }
+
+  const sendMessageToAI = async (conv: EmotionConversation) => {
+    setIsLoading(true)
+    setCurrentAiResponse("")
+    setIsTyping(true)
 
     try {
-      // 调用 AI API
       const response = await fetch("/api/ai-comfort", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          emotion: selectedEmotion,
-          text: emotionText,
+          emotion: conv.emotion,
+          text: conv.messages[conv.messages.length - 1].content,
+          conversationHistory: conv.messages.slice(0, -1),
         }),
       })
 
-      const data = await response.json()
-      setAiResponse(data.response)
+      if (!response.ok) {
+        throw new Error("API request failed")
+      }
 
-      // 延迟显示 AI 回复
-      setTimeout(() => {
-        setIsLoading(false)
-        setShowResponse(true)
-      }, 2000)
+      const reader = response.body?.getReader()
+      const decoder = new TextDecoder()
+
+      if (!reader) {
+        throw new Error("Failed to get response reader")
+      }
+
+      let fullResponse = ""
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value)
+        const lines = chunk.split('\n')
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6)
+            try {
+              const parsed = JSON.parse(data)
+              if (parsed.content) {
+                fullResponse += parsed.content
+                setCurrentAiResponse(fullResponse)
+              }
+            } catch (error) {
+              // Skip invalid JSON
+            }
+          }
+        }
+      }
+
+      // 添加AI响应到对话
+      const aiMessage: ConversationMessage = {
+        type: 'ai',
+        content: fullResponse,
+        timestamp: new Date().toISOString(),
+      }
+
+      const finalConversation = {
+        ...conv,
+        messages: [...conv.messages, aiMessage],
+        updatedAt: new Date().toISOString(),
+      }
+
+      setConversation(finalConversation)
+      saveEmotionConversation(finalConversation)
+      setShowReleaseOptions(true)
+
     } catch (error) {
       console.error("Error calling AI API:", error)
+      const errorMessage = "抱歉，暂时无法获取回复。但请记住，你的感受是被理解和接纳的。"
+      setCurrentAiResponse(errorMessage)
+      
+      const aiMessage: ConversationMessage = {
+        type: 'ai',
+        content: errorMessage,
+        timestamp: new Date().toISOString(),
+      }
+
+      const finalConversation = {
+        ...conv,
+        messages: [...conv.messages, aiMessage],
+        updatedAt: new Date().toISOString(),
+      }
+
+      setConversation(finalConversation)
+      saveEmotionConversation(finalConversation)
+      setShowReleaseOptions(true)
+    } finally {
       setIsLoading(false)
-      setAiResponse("抱歉，暂时无法获取回复，但你的情绪已经被记录下来了。请记住，每一种情绪都是有意义的。")
-      setShowResponse(true)
+      setIsTyping(false)
     }
   }
 
-  const resetForm = () => {
+  const releaseBalloon = () => {
+    if (!conversation) return
+
+    const releasedConversation = {
+      ...conversation,
+      isReleased: true,
+      updatedAt: new Date().toISOString(),
+    }
+
+    setConversation(releasedConversation)
+    saveEmotionConversation(releasedConversation)
+    setShowReleaseOptions(false)
+  }
+
+  const resetConversation = () => {
+    setConversation(null)
+    setCurrentAiResponse("")
     setSelectedEmotion("")
     setEmotionText("")
-    setIsReleasing(false)
-    setShowResponse(false)
-    setAiResponse("")
+    setHasSelectedEmotion(false)
+    setShowReleaseOptions(false)
+    setIsTyping(false)
     setIsLoading(false)
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-50 to-pink-100">
       {/* Header */}
-      <div className="p-6 flex items-center">
+      <div className="p-6 flex items-center justify-between">
         <Link href="/">
           <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-800">
             <ArrowLeft className="w-4 h-4 mr-2" />
             返回首页
           </Button>
         </Link>
+        
+        {conversation && (
+          <Button
+            onClick={resetConversation}
+            variant="outline"
+            size="sm"
+            className="text-gray-600 hover:text-gray-800"
+          >
+            <RotateCcw className="w-4 h-4 mr-2" />
+            重新开始
+          </Button>
+        )}
       </div>
 
       <div className="container mx-auto px-6 py-8">
         <AnimatePresence mode="wait">
-          {!isReleasing ? (
+          {!hasSelectedEmotion ? (
             <motion.div
-              key="form"
+              key="emotion-selection"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
@@ -107,9 +247,13 @@ export default function ReleasePage() {
 
               {/* 情绪气球选择 */}
               <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 shadow-lg mb-6">
-                <h3 className="text-xl font-semibold text-gray-800 mb-6 text-center">选择你的情绪气球</h3>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-semibold text-gray-800">选择你的情绪气球</h3>
+                  <CustomEmotionManager onEmotionAdded={refreshEmotionTypes} />
+                </div>
+                
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {emotionColors.map((emotion) => (
+                  {emotionTypes.map((emotion) => (
                     <motion.button
                       key={emotion.value}
                       whileHover={{ scale: 1.05 }}
@@ -120,9 +264,10 @@ export default function ReleasePage() {
                       }`}
                     >
                       <div
-                        className={`w-16 h-20 bg-gradient-to-b ${emotion.color} rounded-full mx-auto mb-2 shadow-lg`}
+                        className={`w-16 h-20 bg-gradient-to-b ${emotion.color} rounded-full mx-auto mb-2 shadow-lg relative overflow-hidden`}
                       >
-                        <div className="w-2 h-8 bg-gray-400 mx-auto"></div>
+                        <div className="w-2 h-8 bg-gray-400 mx-auto absolute bottom-0 left-1/2 transform -translate-x-1/2"></div>
+                        <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-white/50 rounded-full"></div>
                       </div>
                       <p className="text-sm font-medium text-gray-700">{emotion.name}</p>
                     </motion.button>
@@ -141,74 +286,168 @@ export default function ReleasePage() {
                 />
               </div>
 
-              {/* 释放按钮 */}
+              {/* 开始对话按钮 */}
               <div className="text-center">
                 <Button
-                  onClick={handleRelease}
+                  onClick={startConversation}
                   disabled={!selectedEmotion || !emotionText.trim()}
                   size="lg"
                   className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-12 py-6 text-xl rounded-full shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
                 >
-                  释放气球
-                  <Send className="w-5 h-5 ml-2" />
+                  开始对话
+                  <MessageCircle className="w-5 h-5 ml-2" />
                 </Button>
               </div>
             </motion.div>
           ) : (
             <motion.div
-              key="release"
+              key="conversation"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="max-w-2xl mx-auto text-center"
+              className="max-w-4xl mx-auto"
             >
-              {/* 气球释放动画 */}
-              <div className="relative h-96 mb-8">
-                <motion.div
-                  initial={{ y: 0, scale: 1 }}
-                  animate={{ y: -400, scale: 0.5 }}
-                  transition={{ duration: 3, ease: "easeOut" }}
-                  className={`w-24 h-30 bg-gradient-to-b ${
-                    emotionColors.find((e) => e.value === selectedEmotion)?.color
-                  } rounded-full mx-auto shadow-lg absolute left-1/2 transform -translate-x-1/2 bottom-0`}
-                >
-                  <div className="w-3 h-12 bg-gray-400 mx-auto"></div>
-                </motion.div>
+              {/* 选中的情绪显示 */}
+              <div className="text-center mb-6">
+                <div className="flex items-center justify-center gap-3 mb-2">
+                  <div
+                    className={`w-8 h-10 bg-gradient-to-b ${
+                      emotionTypes.find(e => e.value === selectedEmotion)?.color
+                    } rounded-full shadow-lg relative overflow-hidden`}
+                  >
+                    <div className="w-1 h-4 bg-gray-400 mx-auto absolute bottom-0 left-1/2 transform -translate-x-1/2"></div>
+                  </div>
+                  <h2 className="text-2xl font-semibold text-gray-800">
+                    {emotionTypes.find(e => e.value === selectedEmotion)?.name} 对话
+                  </h2>
+                </div>
+                {conversation?.isReleased && (
+                  <motion.p
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-green-600 font-medium"
+                  >
+                    气球已释放 - 情绪已得到释放 🎈
+                  </motion.p>
+                )}
               </div>
 
-              {isLoading ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 shadow-lg"
-                >
-                  <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-500" />
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">正在为你准备回复...</h3>
-                  <p className="text-gray-600">请稍等，我正在仔细聆听你的情绪</p>
-                </motion.div>
-              ) : showResponse ? (
+              {/* 对话区域 */}
+              <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg mb-6 max-h-96 overflow-y-auto">
+                <div className="p-6 space-y-4">
+                  {conversation?.messages.map((message, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${
+                          message.type === 'user'
+                            ? 'bg-blue-500 text-white rounded-br-none'
+                            : 'bg-gray-100 text-gray-800 rounded-bl-none'
+                        }`}
+                      >
+                        <p className="text-sm leading-relaxed">{message.content}</p>
+                        <p className="text-xs mt-1 opacity-70">
+                          {new Date(message.timestamp).toLocaleTimeString('zh-CN', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
+
+                  {/* 实时显示AI回复 */}
+                  {isTyping && currentAiResponse && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex justify-start"
+                    >
+                      <div className="max-w-xs lg:max-w-md px-4 py-3 rounded-lg bg-gray-100 text-gray-800 rounded-bl-none">
+                        <div className="text-sm leading-relaxed">
+                          {currentAiResponse}
+                          <span className="animate-pulse">|</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* 加载指示器 */}
+                  {isLoading && !currentAiResponse && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex justify-start"
+                    >
+                      <div className="max-w-xs lg:max-w-md px-4 py-3 rounded-lg bg-gray-100 text-gray-800 rounded-bl-none">
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span className="text-sm">心灵伙伴正在思考...</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  <div ref={messagesEndRef} />
+                </div>
+              </div>
+
+              {/* 释放选项 */}
+              {showReleaseOptions && !conversation?.isReleased && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 shadow-lg"
+                  className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg mb-6"
                 >
-                  <h3 className="text-xl font-semibold text-gray-800 mb-4">来自心灵的回应</h3>
-                  <p className="text-gray-700 leading-relaxed mb-6">{aiResponse}</p>
-                  <Button
-                    onClick={resetForm}
-                    className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
-                  >
-                    继续释放情绪
-                  </Button>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+                    你想要释放这个情绪气球吗？
+                  </h3>
+                  <div className="flex gap-4 justify-center">
+                    <Button
+                      onClick={releaseBalloon}
+                      className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white"
+                    >
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      释放气球
+                    </Button>
+                    <Button
+                      onClick={() => setShowReleaseOptions(false)}
+                      variant="outline"
+                    >
+                      继续对话
+                    </Button>
+                  </div>
                 </motion.div>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 shadow-lg"
-                >
-                  <h3 className="text-xl font-semibold text-gray-800 mb-2">气球已经飞走了</h3>
-                  <p className="text-gray-600">你的情绪正在被温柔地释放...</p>
-                </motion.div>
+              )}
+
+              {/* 消息输入区域 */}
+              {!conversation?.isReleased && (
+                <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
+                  <div className="flex gap-4">
+                    <Textarea
+                      value={emotionText}
+                      onChange={(e) => setEmotionText(e.target.value)}
+                      placeholder="继续分享你的感受..."
+                      className="flex-1 min-h-16 resize-none border-0 bg-white/50 focus:bg-white/80 transition-all duration-300"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault()
+                          sendMessage()
+                        }
+                      }}
+                    />
+                    <Button
+                      onClick={sendMessage}
+                      disabled={!emotionText.trim() || isLoading}
+                      className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+                    >
+                      <Send className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
               )}
             </motion.div>
           )}
