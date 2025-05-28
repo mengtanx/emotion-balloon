@@ -8,21 +8,41 @@ interface EmotionHeatmapProps {
 }
 
 export function EmotionHeatmap({ className = "" }: EmotionHeatmapProps) {
-  // 获取过去52周的日期数据（364天）
+  // 获取过去52周的日期数据（365天）
   const getWeeksData = () => {
     const weeks = []
     // 使用固定的基准日期 2025-05-28
     const baseDate = new Date('2025-05-28')
     
-    // 计算从基准日期开始往前364天
-    for (let weekIndex = 51; weekIndex >= 0; weekIndex--) {
+    // 找到baseDate是星期几 (0=Sunday, 1=Monday, ..., 6=Saturday)
+    const baseDayOfWeek = baseDate.getDay()
+    const daysFromSunday = baseDayOfWeek === 0 ? 0 : baseDayOfWeek
+    
+    // 计算从哪个日期开始（确保从周日开始）
+    const startDate = new Date(baseDate)
+    startDate.setDate(startDate.getDate() - daysFromSunday - (52 * 7 - 1))
+    
+    // 生成53周的数据以确保覆盖365天
+    for (let weekIndex = 0; weekIndex < 53; weekIndex++) {
       const week = []
-      for (let dayIndex = 6; dayIndex >= 0; dayIndex--) {
-        const date = new Date(baseDate)
-        date.setDate(date.getDate() - (weekIndex * 7 + dayIndex))
-        week.unshift(date.toISOString().split('T')[0])
+      for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+        const date = new Date(startDate)
+        date.setDate(startDate.getDate() + (weekIndex * 7 + dayIndex))
+        
+        // 只添加在基准日期365天范围内的日期
+        const daysDiff = Math.floor((baseDate.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
+        if (daysDiff >= 0 && daysDiff < 365) {
+          week.push(date.toISOString().split('T')[0])
+        } else if (daysDiff < 0) {
+          // 如果超过基准日期，用空字符串占位但不显示
+          week.push('')
+        }
       }
-      weeks.push(week)
+      
+      // 如果这一周有任何有效日期，就添加到weeks中
+      if (week.some(day => day !== '')) {
+        weeks.push(week)
+      }
     }
     
     return weeks
@@ -42,6 +62,15 @@ export function EmotionHeatmap({ className = "" }: EmotionHeatmapProps) {
 
   // 获取日期的情绪信息
   const getDateInfo = (date: string) => {
+    if (!date) {
+      return { 
+        intensity: 0, 
+        style: { backgroundColor: 'transparent' }, 
+        hoverStyle: { backgroundColor: 'transparent' },
+        tooltip: '' 
+      }
+    }
+    
     const emotions = emotionsByDate[date] || []
     const count = emotions.length
     
@@ -106,6 +135,7 @@ export function EmotionHeatmap({ className = "" }: EmotionHeatmapProps) {
   }
 
   const formatTooltipDate = (date: string) => {
+    if (!date) return ''
     return new Date(date).toLocaleDateString('zh-CN', {
       month: 'short',
       day: 'numeric'
@@ -114,20 +144,45 @@ export function EmotionHeatmap({ className = "" }: EmotionHeatmapProps) {
 
   const weeksData = getWeeksData()
   
-  // 生成月份标签
+  // 生成月份标签 - 基于实际的周数据
   const getMonthLabels = () => {
     const labels = []
-    // 使用固定的基准日期
-    const baseDate = new Date('2025-05-28')
+    const monthPositions = []
     
+    // 遍历所有周，记录每个月第一次出现的位置
+    const monthFirstWeek = new Map()
+    
+    weeksData.forEach((week, weekIndex) => {
+      week.forEach(date => {
+        if (date) {
+          const month = new Date(date).getMonth()
+          if (!monthFirstWeek.has(month)) {
+            monthFirstWeek.set(month, weekIndex)
+          }
+        }
+      })
+    })
+    
+    // 根据基准日期生成最近12个月的标签
+    const baseDate = new Date('2025-05-28')
     for (let i = 11; i >= 0; i--) {
       const month = new Date(baseDate)
       month.setMonth(month.getMonth() - i)
-      labels.push(month.toLocaleDateString('zh-CN', { month: 'short' }))
+      const monthNum = month.getMonth()
+      const weekPos = monthFirstWeek.get(monthNum)
+      
+      if (weekPos !== undefined) {
+        labels.push({
+          label: month.toLocaleDateString('zh-CN', { month: 'short' }),
+          position: weekPos
+        })
+      }
     }
     
     return labels
   }
+
+  const monthLabels = getMonthLabels()
 
   // 检查今天是否为基准日期
   const isToday = (date: string) => {
@@ -138,9 +193,15 @@ export function EmotionHeatmap({ className = "" }: EmotionHeatmapProps) {
     <div className={`${className}`}>
       <div className="overflow-x-auto">
         {/* 月份标签 */}
-        <div className="flex justify-between text-xs text-gray-500 mb-2 min-w-max ml-8">
-          {getMonthLabels().map((month, i) => (
-            <span key={i} className="w-8 text-center">{month}</span>
+        <div className="relative mb-2 ml-8" style={{ minWidth: `${weeksData.length * 16}px` }}>
+          {monthLabels.map((monthInfo, i) => (
+            <span 
+              key={i} 
+              className="absolute text-xs text-gray-500"
+              style={{ left: `${monthInfo.position * 16}px` }}
+            >
+              {monthInfo.label}
+            </span>
           ))}
         </div>
 
@@ -168,6 +229,10 @@ export function EmotionHeatmap({ className = "" }: EmotionHeatmapProps) {
             {weeksData.map((week, weekIndex) => (
               <div key={weekIndex} className="flex flex-col gap-1">
                 {week.map((date, dayIndex) => {
+                  if (!date) {
+                    return <div key={`empty-${weekIndex}-${dayIndex}`} className="w-3 h-3" />
+                  }
+                  
                   const { style, hoverStyle, tooltip } = getDateInfo(date)
                   const isTodayDate = isToday(date)
                   

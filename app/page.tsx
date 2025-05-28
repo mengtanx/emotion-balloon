@@ -36,22 +36,6 @@ export default function HomePage() {
         </motion.div>
       )}
 
-      {/* Emotion Heatmap */}
-      <div className="container mx-auto px-6 py-2">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white/60 backdrop-blur-sm rounded-xl p-4 shadow-sm mb-6 border border-gray-200/50"
-        >
-          <div className="flex items-center gap-2 mb-3">
-            <Calendar className="w-4 h-4 text-gray-600" />
-            <h3 className="text-sm font-medium text-gray-700">过去一年的情绪记录</h3>
-          </div>
-          <EmotionHeatmap />
-        </motion.div>
-      </div>
-
       {/* Main Content */}
       <div className="container mx-auto px-6 py-12">
         <motion.div
@@ -128,6 +112,22 @@ export default function HomePage() {
               </Button>
             </Link>
           </motion.div>
+        </motion.div>
+      </div>
+
+      {/* Emotion Heatmap - 移到底部 */}
+      <div className="container mx-auto px-6 pb-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.5 }}
+          className="bg-white/60 backdrop-blur-sm rounded-xl p-4 shadow-sm border border-gray-200/50"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Calendar className="w-4 h-4 text-gray-600" />
+            <h3 className="text-sm font-medium text-gray-700">过去一年的情绪记录</h3>
+          </div>
+          <EmotionHeatmap />
         </motion.div>
       </div>
     </div>

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { getEmotionName, getConversationsByDate, EmotionConversation } from "@/lib/emotion-utils"
 import Link from "next/link"
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 interface EmotionDetailSidebarProps {
   selectedDate: string | null
@@ -115,7 +117,15 @@ export function EmotionDetailSidebar({ selectedDate, onClose }: EmotionDetailSid
                                   : 'bg-white text-gray-800 rounded-bl-none shadow-sm'
                               }`}
                             >
-                              <p className="leading-relaxed">{message.content}</p>
+                              {message.type === 'ai' ? (
+                                <div className="leading-relaxed prose prose-sm max-w-none">
+                                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {message.content}
+                                  </ReactMarkdown>
+                                </div>
+                              ) : (
+                                <p className="leading-relaxed">{message.content}</p>
+                              )}
                               <p className="text-xs mt-1 opacity-70">
                                 {formatTime(message.timestamp)}
                               </p>

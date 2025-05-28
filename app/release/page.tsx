@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft, Send, Loader2, MessageCircle, CheckCircle, RotateCcw, Calendar } from "lucide-react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { Typewriter } from "@/components/ui/typewriter"
 import { CustomEmotionManager } from "@/components/custom-emotion-manager"
 import { 
@@ -525,7 +527,13 @@ export default function ReleasePage() {
                             : 'bg-gray-100 text-gray-800 rounded-bl-none'
                         }`}
                       >
-                        <p className="text-sm leading-relaxed">{message.content}</p>
+                        {message.type === 'ai' ? (
+                          <div className="text-sm leading-relaxed prose prose-sm max-w-none">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                          </div>
+                        ) : (
+                          <p className="text-sm leading-relaxed">{message.content}</p>
+                        )}
                         <p className="text-xs mt-1 opacity-70">
                           {new Date(message.timestamp).toLocaleTimeString('zh-CN', {
                             hour: '2-digit',
@@ -545,7 +553,7 @@ export default function ReleasePage() {
                     >
                       <div className="max-w-xs lg:max-w-md px-4 py-3 rounded-lg bg-gray-100 text-gray-800 rounded-bl-none">
                         <div className="text-sm leading-relaxed">
-                          {currentAiResponse}
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentAiResponse}</ReactMarkdown>
                           <span className="animate-pulse">|</span>
                         </div>
                       </div>
