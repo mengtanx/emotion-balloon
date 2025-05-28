@@ -98,7 +98,7 @@
 
 ## 🔧 本地开发
 
-```bash
+\`\`\`bash
 # 安装依赖
 npm install
 
@@ -110,13 +110,13 @@ npm run build
 
 # 启动生产服务器
 npm start
-```
+\`\`\`
 
 ## 🌐 环境变量
 
-```env
+\`\`\`env
 OPENROUTER_API_KEY=your_openrouter_api_key
-```
+\`\`\`
 
 ## 🎨 设计亮点
 

@@ -126,4 +126,4 @@ export function getConversationsByDate(date: string): EmotionConversation[] {
 // 生成对话ID
 export function generateConversationId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
-} 
+}
