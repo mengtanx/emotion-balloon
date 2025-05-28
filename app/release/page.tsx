@@ -224,44 +224,63 @@ export default function ReleasePage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 pointer-events-none"
+            className="fixed inset-0 z-50 pointer-events-none bg-gradient-to-b from-blue-100/20 to-transparent"
           >
             {/* 气球动画 */}
             <motion.div
-              initial={{ x: "50%", y: "80%", scale: 1 }}
+              initial={{ 
+                x: "calc(50% - 48px)", 
+                y: "calc(100vh - 120px)", 
+                scale: 1,
+                rotate: 0
+              }}
               animate={{ 
-                x: "50%", 
-                y: "-20%", 
-                scale: [1, 1.2, 0],
-                rotate: [0, 5, -5, 10, -10, 0]
+                x: "calc(50% - 48px)",
+                y: "-120px", 
+                scale: [1, 1.1, 0.8, 0],
+                rotate: [0, -3, 3, -2, 2, 0]
               }}
               transition={{ 
-                duration: 3,
-                times: [0, 0.7, 1],
-                ease: "easeOut"
+                duration: 2.8,
+                times: [0, 0.3, 0.8, 1],
+                ease: [0.25, 0.46, 0.45, 0.94]
               }}
-              className="absolute left-1/2 transform -translate-x-1/2"
+              className="absolute"
             >
               <div
-                className={`w-24 h-30 bg-gradient-to-b ${
+                className={`w-24 h-32 bg-gradient-to-b ${
                   emotionTypes.find(e => e.value === selectedEmotion)?.color
-                } rounded-full shadow-2xl relative overflow-hidden`}
+                } rounded-full shadow-2xl relative`}
+                style={{
+                  borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%'
+                }}
               >
-                <div className="w-3 h-12 bg-gray-400 mx-auto absolute bottom-0 left-1/2 transform -translate-x-1/2"></div>
-                <div className="absolute top-3 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white/50 rounded-full"></div>
+                {/* 气球线 */}
+                <div className="w-0.5 h-16 bg-gray-600 mx-auto absolute -bottom-16 left-1/2 transform -translate-x-1/2"></div>
+                
+                {/* 气球高光 */}
+                <div className="absolute top-4 left-6 w-3 h-4 bg-white/40 rounded-full blur-sm"></div>
                 
                 {/* 爆炸效果 */}
                 <motion.div
                   initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: [0, 1, 0], scale: [0, 3, 5] }}
-                  transition={{ delay: 2.5, duration: 0.5 }}
-                  className="absolute inset-0 bg-gradient-to-r from-yellow-300 via-orange-300 to-red-300 rounded-full"
+                  animate={{ opacity: [0, 1, 0], scale: [0, 2, 4] }}
+                  transition={{ delay: 2.3, duration: 0.5, ease: "easeOut" }}
+                  className="absolute inset-0 bg-gradient-radial from-yellow-200 via-orange-200 to-red-200 rounded-full"
+                />
+                
+                {/* 闪光效果 */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: [0, 1, 0] }}
+                  transition={{ delay: 2.3, duration: 0.3 }}
+                  className="absolute inset-0 bg-white rounded-full"
                 />
               </div>
             </motion.div>
 
             {/* 漂浮粒子效果 */}
-            {[...Array(12)].map((_, i) => (
+            {[...Array(15)].map((_, i) => (
               <motion.div
                 key={i}
                 initial={{ 
@@ -271,43 +290,72 @@ export default function ReleasePage() {
                   opacity: 0
                 }}
                 animate={{ 
-                  x: `${50 + (Math.random() - 0.5) * 100}%`,
-                  y: `${20 + Math.random() * 60}%`,
-                  scale: [0, 1, 0],
-                  opacity: [0, 1, 0]
+                  x: `${50 + (Math.random() - 0.5) * 80}%`,
+                  y: `${30 + Math.random() * 40}%`,
+                  scale: [0, Math.random() * 0.8 + 0.4, 0],
+                  opacity: [0, 0.8, 0],
+                  rotate: Math.random() * 360
                 }}
                 transition={{ 
-                  delay: 2.5 + i * 0.1,
-                  duration: 1.5,
+                  delay: 2.3 + i * 0.05,
+                  duration: 1.2,
                   ease: "easeOut"
                 }}
-                className="absolute w-2 h-2 bg-gradient-to-r from-pink-300 to-purple-300 rounded-full"
+                className={`absolute w-2 h-2 rounded-full ${
+                  i % 3 === 0 ? 'bg-yellow-300' : 
+                  i % 3 === 1 ? 'bg-pink-300' : 'bg-purple-300'
+                }`}
               />
             ))}
 
             {/* 文字提示 */}
             <motion.div
-              initial={{ opacity: 0, y: 50 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ delay: 1 }}
-              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center"
+              exit={{ opacity: 0, y: -30 }}
+              transition={{ delay: 0.5 }}
+              className="absolute top-1/3 left-1/2 transform -translate-x-1/2 text-center"
             >
               <motion.h2
-                initial={{ scale: 0.8 }}
+                initial={{ scale: 0.9 }}
                 animate={{ scale: 1 }}
-                className="text-3xl font-bold text-gray-800 mb-2"
+                className="text-2xl font-bold text-gray-700 mb-2"
               >
                 情绪正在释放...
               </motion.h2>
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 1.5 }}
-                className="text-gray-600"
+                transition={{ delay: 1 }}
+                className="text-gray-500"
               >
                 让它飘向天空，拥抱内心的平静
               </motion.p>
+            </motion.div>
+
+            {/* 释放完成提示 */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 2.5 }}
+              className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: [0, 1.2, 1] }}
+                transition={{ delay: 2.8, duration: 0.5 }}
+                className="w-16 h-16 bg-green-500 rounded-full mx-auto mb-4 flex items-center justify-center"
+              >
+                <CheckCircle className="w-8 h-8 text-white" />
+              </motion.div>
+              <motion.h3
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 2.9 }}
+                className="text-xl font-semibold text-gray-700"
+              >
+                释放成功！
+              </motion.h3>
             </motion.div>
           </motion.div>
         )}

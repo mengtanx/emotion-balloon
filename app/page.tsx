@@ -62,16 +62,16 @@ export default function HomePage() {
       )}
 
       {/* Emotion Heatmap */}
-      <div className="container mx-auto px-6 py-4">
+      <div className="container mx-auto px-6 py-2">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg mb-8"
+          className="bg-white/60 backdrop-blur-sm rounded-xl p-4 shadow-sm mb-6 border border-gray-200/50"
         >
-          <div className="flex items-center gap-2 mb-4">
-            <Calendar className="w-5 h-5 text-gray-600" />
-            <h3 className="text-lg font-semibold text-gray-800">情绪历史</h3>
+          <div className="flex items-center gap-2 mb-3">
+            <Calendar className="w-4 h-4 text-gray-600" />
+            <h3 className="text-sm font-medium text-gray-700">过去一年的情绪记录</h3>
           </div>
           <EmotionHeatmap />
         </motion.div>

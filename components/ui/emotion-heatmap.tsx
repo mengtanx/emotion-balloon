@@ -8,18 +8,23 @@ interface EmotionHeatmapProps {
 }
 
 export function EmotionHeatmap({ className = "" }: EmotionHeatmapProps) {
-  // 获取过去365天的日期
-  const getDatesArray = (days: number) => {
-    const dates = []
+  // 获取过去52周的日期数据（364天）
+  const getWeeksData = () => {
+    const weeks = []
     const today = new Date()
     
-    for (let i = days - 1; i >= 0; i--) {
-      const date = new Date(today)
-      date.setDate(date.getDate() - i)
-      dates.push(date.toISOString().split('T')[0])
+    // 计算从今天开始往前364天
+    for (let weekIndex = 51; weekIndex >= 0; weekIndex--) {
+      const week = []
+      for (let dayIndex = 6; dayIndex >= 0; dayIndex--) {
+        const date = new Date(today)
+        date.setDate(date.getDate() - (weekIndex * 7 + dayIndex))
+        week.unshift(date.toISOString().split('T')[0])
+      }
+      weeks.push(week)
     }
     
-    return dates
+    return weeks
   }
 
   // 获取情绪数据
@@ -34,113 +39,138 @@ export function EmotionHeatmap({ className = "" }: EmotionHeatmapProps) {
     emotionsByDate[date].push(conv.emotion)
   })
 
-  // 生成过去365天的数据
-  const dates = getDatesArray(365)
-  const weeks: string[][] = []
-  
-  // 将日期按周分组
-  for (let i = 0; i < dates.length; i += 7) {
-    weeks.push(dates.slice(i, i + 7))
-  }
-
-  // 获取日期的情绪强度和颜色
+  // 获取日期的情绪信息
   const getDateInfo = (date: string) => {
     const emotions = emotionsByDate[date] || []
     const count = emotions.length
     
     if (count === 0) {
-      return { intensity: 0, color: 'bg-gray-100', tooltip: '无记录' }
+      return { 
+        intensity: 0, 
+        style: { backgroundColor: '#f3f4f6' }, 
+        hoverStyle: { backgroundColor: '#e5e7eb' },
+        tooltip: '无记录' 
+      }
     }
     
     // 使用最近的情绪作为主色调
     const mainEmotion = emotions[emotions.length - 1]
     const baseColor = getEmotionColor(mainEmotion)
     
-    // 根据记录数量调整透明度
-    let intensity = Math.min(count, 4) // 最大4级强度
-    let opacity = ''
+    // 根据记录数量调整强度
+    const intensity = Math.min(count, 4)
     
-    switch (intensity) {
-      case 1:
-        opacity = 'opacity-30'
-        break
-      case 2:
-        opacity = 'opacity-50'
-        break
-      case 3:
-        opacity = 'opacity-75'
-        break
-      case 4:
-        opacity = 'opacity-100'
-        break
-      default:
-        opacity = 'opacity-30'
+    // 颜色映射到具体的RGB值
+    const colorValues: Record<string, string[]> = {
+      'from-red-400': ['#fca5a5', '#f87171', '#ef4444', '#dc2626'],
+      'from-blue-400': ['#93c5fd', '#60a5fa', '#3b82f6', '#2563eb'],
+      'from-yellow-400': ['#fde047', '#facc15', '#eab308', '#ca8a04'],
+      'from-green-400': ['#86efac', '#4ade80', '#22c55e', '#16a34a'],
+      'from-purple-400': ['#c084fc', '#a855f7', '#9333ea', '#7c3aed'],
+      'from-pink-400': ['#f9a8d4', '#f472b6', '#ec4899', '#db2777'],
+      'from-indigo-400': ['#a5b4fc', '#818cf8', '#6366f1', '#4f46e5'],
+      'from-amber-400': ['#fcd34d', '#f59e0b', '#d97706', '#b45309'],
+      'from-gray-400': ['#d1d5db', '#9ca3af', '#6b7280', '#4b5563']
     }
+    
+    // 找到匹配的颜色组
+    const colorKey = Object.keys(colorValues).find(key => baseColor.includes(key)) || 'from-blue-400'
+    const colors = colorValues[colorKey]
+    const color = colors[intensity - 1]
+    const hoverColor = colors[Math.min(intensity, 3)] // hover时稍微深一点
     
     return {
       intensity,
-      color: `${baseColor} ${opacity}`,
+      style: { backgroundColor: color },
+      hoverStyle: { backgroundColor: hoverColor },
       tooltip: `${count} 条记录`
     }
   }
 
   const formatTooltipDate = (date: string) => {
     return new Date(date).toLocaleDateString('zh-CN', {
-      year: 'numeric',
       month: 'short',
       day: 'numeric'
     })
   }
 
+  const weeksData = getWeeksData()
+  
+  // 生成月份标签
+  const getMonthLabels = () => {
+    const labels = []
+    const today = new Date()
+    
+    for (let i = 11; i >= 0; i--) {
+      const month = new Date(today)
+      month.setMonth(month.getMonth() - i)
+      labels.push(month.toLocaleDateString('zh-CN', { month: 'short' }))
+    }
+    
+    return labels
+  }
+
   return (
     <div className={`${className}`}>
-      <div className="flex flex-col gap-2">
+      <div className="overflow-x-auto">
         {/* 月份标签 */}
-        <div className="grid grid-cols-12 gap-2 text-xs text-gray-500 mb-2">
-          {Array.from({ length: 12 }, (_, i) => {
-            const month = new Date()
-            month.setMonth(month.getMonth() - 11 + i)
-            return (
-              <div key={i} className="text-center">
-                {month.toLocaleDateString('zh-CN', { month: 'short' })}
-              </div>
-            )
-          })}
+        <div className="flex justify-between text-xs text-gray-500 mb-2 min-w-max">
+          {getMonthLabels().map((month, i) => (
+            <span key={i} className="w-8 text-center">{month}</span>
+          ))}
         </div>
 
-        {/* 热力图网格 - 调整为更适合的布局 */}
-        <div className="grid grid-cols-12 gap-1 auto-rows-min">
-          {Array.from({ length: 365 }, (_, i) => {
-            const date = new Date()
-            date.setDate(date.getDate() - (364 - i))
-            const dateString = date.toISOString().split('T')[0]
-            const { color, tooltip } = getDateInfo(dateString)
-            
-            return (
-              <motion.div
-                key={dateString}
-                className={`w-3 h-3 rounded-sm ${color} border border-gray-200 cursor-pointer transition-all hover:ring-2 hover:ring-blue-300`}
-                title={`${formatTooltipDate(dateString)}: ${tooltip}`}
-                whileHover={{ scale: 1.2 }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: i * 0.001 }}
-              />
-            )
-          })}
+        {/* 热力图网格 */}
+        <div className="flex gap-1 min-w-max">
+          {weeksData.map((week, weekIndex) => (
+            <div key={weekIndex} className="flex flex-col gap-1">
+              {week.map((date, dayIndex) => {
+                const { style, hoverStyle, tooltip } = getDateInfo(date)
+                const isToday = date === new Date().toISOString().split('T')[0]
+                
+                return (
+                  <motion.div
+                    key={date}
+                    className={`w-3 h-3 rounded-sm border border-gray-200 cursor-pointer transition-all duration-200 ${
+                      isToday ? 'ring-2 ring-blue-400 ring-offset-1' : ''
+                    }`}
+                    style={style}
+                    title={`${formatTooltipDate(date)}: ${tooltip}`}
+                    onMouseEnter={(e) => {
+                      Object.assign(e.currentTarget.style, hoverStyle)
+                    }}
+                    onMouseLeave={(e) => {
+                      Object.assign(e.currentTarget.style, style)
+                    }}
+                    whileHover={{ scale: 1.2 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: (weekIndex * 7 + dayIndex) * 0.002 }}
+                  />
+                )
+              })}
+            </div>
+          ))}
         </div>
 
-        {/* 图例 */}
-        <div className="flex items-center justify-between mt-4 text-xs text-gray-500">
-          <span>过去一年</span>
-          <div className="flex items-center gap-2">
+        {/* 周标签和图例 */}
+        <div className="flex items-center justify-between mt-3">
+          <div className="flex items-center gap-1 text-xs text-gray-500">
+            <span>周一</span>
+            <div className="w-px h-3 bg-gray-300 mx-1"></div>
+            <span>周三</span>
+            <div className="w-px h-3 bg-gray-300 mx-1"></div>
+            <span>周五</span>
+          </div>
+          
+          <div className="flex items-center gap-2 text-xs text-gray-500">
             <span>少</span>
             <div className="flex gap-1">
               <div className="w-3 h-3 rounded-sm bg-gray-100 border border-gray-200"></div>
-              <div className="w-3 h-3 rounded-sm bg-blue-200 opacity-30 border border-gray-200"></div>
-              <div className="w-3 h-3 rounded-sm bg-blue-400 opacity-50 border border-gray-200"></div>
-              <div className="w-3 h-3 rounded-sm bg-blue-500 opacity-75 border border-gray-200"></div>
-              <div className="w-3 h-3 rounded-sm bg-blue-600 opacity-100 border border-gray-200"></div>
+              <div className="w-3 h-3 rounded-sm bg-green-200 border border-gray-200"></div>
+              <div className="w-3 h-3 rounded-sm bg-green-300 border border-gray-200"></div>
+              <div className="w-3 h-3 rounded-sm bg-green-400 border border-gray-200"></div>
+              <div className="w-3 h-3 rounded-sm bg-green-500 border border-gray-200"></div>
             </div>
             <span>多</span>
           </div>
