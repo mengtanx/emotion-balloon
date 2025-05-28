@@ -136,4 +136,4 @@ window.cleanupCalendarTest = function() {
   console.log("✅ 测试样式已清理");
 }
 
-console.log("\n💡 运行 cleanupCalendarTest() 可以清理测试添加的样式"); 
+console.log("\n💡 运行 cleanupCalendarTest() 可以清理测试添加的样式");

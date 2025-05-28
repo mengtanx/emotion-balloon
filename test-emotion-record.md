@@ -121,22 +121,22 @@
 
 **修复前（错误格式）：**
 
-```javascript
+\`\`\`javascript
 {
   emotion: 'happy',        // 单个字符串
   conversations: [...],
   hasMultiple: false
 }
-```
+\`\`\`
 
 **修复后（正确格式）：**
 
-```javascript
+\`\`\`javascript
 {
   emotions: ['happy'],     // 字符串数组
   conversations: [...]
 }
-```
+\`\`\`
 
 ### 技术修复
 
