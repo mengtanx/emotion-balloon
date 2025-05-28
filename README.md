@@ -116,9 +116,9 @@ npm start
 
 创建 `.env.local` 文件并添加以下配置：
 
-```env
+\`\`\`env
 OPENROUTER_API_KEY=your_openrouter_api_key_here
-```
+\`\`\`
 
 **获取 OpenRouter API 密钥：**
 

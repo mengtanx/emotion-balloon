@@ -202,4 +202,4 @@ export function AppleCalendar({ emotionRecords, onDateSelect, selectedDate }: Ap
       </div>
     </div>
   )
-} 
+}

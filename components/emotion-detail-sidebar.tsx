@@ -181,4 +181,4 @@ export function EmotionDetailSidebar({ selectedDate, onClose }: EmotionDetailSid
       />
     </AnimatePresence>
   )
-} 
+}

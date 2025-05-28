@@ -40,4 +40,4 @@ export function Typewriter({ text, speed = 50, onComplete, className = "" }: Typ
       )}
     </div>
   )
-} 
+}

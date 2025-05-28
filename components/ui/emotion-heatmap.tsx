@@ -148,4 +148,4 @@ export function EmotionHeatmap({ className = "" }: EmotionHeatmapProps) {
       </div>
     </div>
   )
-} 
+}
