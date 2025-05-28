@@ -4,13 +4,15 @@ import { useState } from "react"
 import { motion } from "framer-motion"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { getEmotionColor, getEmotionName } from "@/lib/emotion-utils"
+import { formatDateToLocal, getTodayString, getMonthDates } from "@/lib/date-utils"
 
 interface CalendarDay {
   date: string
   day: number
   isToday: boolean
   isCurrentMonth: boolean
-  emotion?: string
+  emotions: string[]
+  conversations: any[]
 }
 
 interface AppleCalendarProps {
@@ -25,54 +27,53 @@ export function AppleCalendar({ emotionRecords, onDateSelect, selectedDate }: Ap
   const getDaysInMonth = (date: Date): CalendarDay[] => {
     const year = date.getFullYear()
     const month = date.getMonth()
-    const firstDay = new Date(year, month, 1)
-    const lastDay = new Date(year, month + 1, 0)
-    const daysInMonth = lastDay.getDate()
-    const startingDayOfWeek = firstDay.getDay()
-
+    
+    const { prevMonthDates, currentMonthDates, nextMonthDates } = getMonthDates(year, month)
+    const todayString = getTodayString()
+    
     const days: CalendarDay[] = []
-    const today = new Date()
-    const todayString = today.toISOString().split('T')[0]
 
     // 上个月的日期（填充开头）
-    const prevMonth = new Date(year, month - 1, 0)
-    const prevMonthDays = prevMonth.getDate()
-    for (let i = startingDayOfWeek - 1; i >= 0; i--) {
-      const day = prevMonthDays - i
-      const dateString = new Date(year, month - 1, day).toISOString().split('T')[0]
+    prevMonthDates.forEach(dateString => {
+      const dayRecord = emotionRecords[dateString]
+      const dayNumber = parseInt(dateString.split('-')[2])
       days.push({
         date: dateString,
-        day,
-        isToday: false,
+        day: dayNumber,
+        isToday: dateString === todayString,
         isCurrentMonth: false,
-        emotion: emotionRecords[dateString]?.emotion,
+        emotions: dayRecord?.emotions || [],
+        conversations: dayRecord?.conversations || [],
       })
-    }
+    })
 
     // 当前月的日期
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dateString = new Date(year, month, day).toISOString().split('T')[0]
+    currentMonthDates.forEach(dateString => {
+      const dayRecord = emotionRecords[dateString]
+      const dayNumber = parseInt(dateString.split('-')[2])
       days.push({
         date: dateString,
-        day,
+        day: dayNumber,
         isToday: dateString === todayString,
         isCurrentMonth: true,
-        emotion: emotionRecords[dateString]?.emotion,
+        emotions: dayRecord?.emotions || [],
+        conversations: dayRecord?.conversations || [],
       })
-    }
+    })
 
     // 下个月的日期（填充末尾）
-    const remainingDays = 42 - days.length // 6周 * 7天
-    for (let day = 1; day <= remainingDays; day++) {
-      const dateString = new Date(year, month + 1, day).toISOString().split('T')[0]
+    nextMonthDates.forEach(dateString => {
+      const dayRecord = emotionRecords[dateString]
+      const dayNumber = parseInt(dateString.split('-')[2])
       days.push({
         date: dateString,
-        day,
-        isToday: false,
+        day: dayNumber,
+        isToday: dateString === todayString,
         isCurrentMonth: false,
-        emotion: emotionRecords[dateString]?.emotion,
+        emotions: dayRecord?.emotions || [],
+        conversations: dayRecord?.conversations || [],
       })
-    }
+    })
 
     return days
   }
@@ -165,21 +166,36 @@ export function AppleCalendar({ emotionRecords, onDateSelect, selectedDate }: Ap
             </div>
 
             {/* 情绪指示器 */}
-            {day.emotion && (
+            {day.emotions.length > 0 && (
               <>
-                <div 
-                  className={`
-                    absolute bottom-1 left-1/2 transform -translate-x-1/2 
-                    w-6 h-6 rounded-full shadow-sm
-                    ${getEmotionColor(day.emotion)}
-                    transition-all duration-200 group-hover:scale-110
-                  `}
-                />
+                {/* 情绪小点容器 */}
+                <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 flex gap-0.5">
+                  {day.emotions.slice(0, 4).map((emotion, index) => (
+                    <div 
+                      key={`${day.date}-${index}`}
+                      className={`
+                        w-3 h-3 rounded-full shadow-sm
+                        ${getEmotionColor(emotion)}
+                        transition-all duration-200 group-hover:scale-110
+                      `}
+                    />
+                  ))}
+                  {/* 如果有超过4个记录，显示省略号 */}
+                  {day.emotions.length > 4 && (
+                    <div className="w-3 h-3 flex items-center justify-center text-xs text-gray-500 font-bold">
+                      +{day.emotions.length - 4}
+                    </div>
+                  )}
+                </div>
+                
                 {/* 悬停时显示情绪名称 */}
                 <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 
                                opacity-0 group-hover:opacity-100 transition-opacity duration-200
                                bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10">
-                  {getEmotionName(day.emotion)}
+                  {day.emotions.length === 1 
+                    ? getEmotionName(day.emotions[0])
+                    : `${day.emotions.length}条记录: ${day.emotions.map((emotion) => getEmotionName(emotion)).slice(0, 3).join(', ')}${day.emotions.length > 3 ? '...' : ''}`
+                  }
                 </div>
               </>
             )}

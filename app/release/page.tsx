@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft, Send, Loader2, MessageCircle, CheckCircle, RotateCcw, Calendar } from "lucide-react"
 import Link from "next/link"
-import { useSearchParams } from "next/navigation"
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Typewriter } from "@/components/ui/typewriter"
@@ -18,10 +17,19 @@ import {
   saveEmotionConversation,
   generateConversationId 
 } from "@/lib/emotion-utils"
+import { createDateTimeISO } from "@/lib/date-utils"
 
 export default function ReleasePage() {
-  const searchParams = useSearchParams()
-  const selectedDate = searchParams.get('date') // 获取URL中的date参数
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  
+  // 在客户端获取搜索参数，避免 Suspense 问题
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const date = urlParams.get('date')
+      setSelectedDate(date)
+    }
+  }, [])
   
   const [emotionTypes, setEmotionTypes] = useState(getEmotionTypes())
   const [selectedEmotion, setSelectedEmotion] = useState("")
@@ -51,10 +59,8 @@ export default function ReleasePage() {
   // 获取用于创建对话的日期
   const getConversationDate = () => {
     if (selectedDate) {
-      // 如果有选择的日期，使用该日期的当天时间
-      const date = new Date(selectedDate)
-      date.setHours(new Date().getHours(), new Date().getMinutes(), new Date().getSeconds())
-      return date.toISOString()
+      // 使用统一的日期时间创建函数，避免时区问题
+      return createDateTimeISO(selectedDate)
     }
     // 否则使用当前时间
     return new Date().toISOString()

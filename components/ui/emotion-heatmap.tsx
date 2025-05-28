@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { getEmotionConversations, getEmotionColor } from "@/lib/emotion-utils"
 
@@ -8,6 +9,39 @@ interface EmotionHeatmapProps {
 }
 
 export function EmotionHeatmap({ className = "" }: EmotionHeatmapProps) {
+  const [conversations, setConversations] = useState<any[]>([])
+
+  // Function to refresh conversation data
+  const refreshConversations = () => {
+    setConversations(getEmotionConversations())
+  }
+
+  useEffect(() => {
+    // Initial load
+    refreshConversations()
+
+    // Add focus event listener to refresh data when user returns to the page
+    const handleFocus = () => {
+      refreshConversations()
+    }
+
+    // Add visibility change listener to refresh when page becomes visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refreshConversations()
+      }
+    }
+
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    // Cleanup event listeners
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
+
   // 获取过去52周的日期数据（365天）
   const getWeeksData = () => {
     const weeks = []
@@ -49,7 +83,6 @@ export function EmotionHeatmap({ className = "" }: EmotionHeatmapProps) {
   }
 
   // 获取情绪数据
-  const conversations = getEmotionConversations()
   const emotionsByDate: Record<string, string[]> = {}
   
   conversations.forEach(conv => {

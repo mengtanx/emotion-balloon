@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Plus, Calendar, TrendingUp, MessageCircle } from "lucide-react"
+import { ArrowLeft, Plus, Calendar, TrendingUp, MessageCircle, RotateCcw } from "lucide-react"
 import Link from "next/link"
 import { AppleCalendar } from "@/components/ui/apple-calendar"
 import { EmotionDetailSidebar } from "@/components/emotion-detail-sidebar"
@@ -14,6 +14,7 @@ import {
   getEmotionName,
   getEmotionColor 
 } from "@/lib/emotion-utils"
+import { extractDateFromISO } from "@/lib/date-utils"
 
 export default function RecordsPage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
@@ -21,26 +22,52 @@ export default function RecordsPage() {
   const [emotionTypes, setEmotionTypes] = useState(getEmotionTypes())
   const [showSidebar, setShowSidebar] = useState(false)
 
-  useEffect(() => {
-    // 从新的对话数据结构中构建日历所需的记录格式
+  // Function to refresh emotion records data
+  const refreshEmotionRecords = () => {
     const conversations = getEmotionConversations()
     const records: Record<string, any> = {}
     
     conversations.forEach(conversation => {
-      const date = conversation.createdAt.split('T')[0]
+      // 使用统一的日期提取函数
+      const date = extractDateFromISO(conversation.createdAt)
       if (!records[date]) {
         records[date] = {
-          emotion: conversation.emotion,
           conversations: [conversation],
-          hasMultiple: false
+          emotions: [conversation.emotion]
         }
       } else {
         records[date].conversations.push(conversation)
-        records[date].hasMultiple = true
+        records[date].emotions.push(conversation.emotion)
       }
     })
 
     setEmotionRecords(records)
+  }
+
+  useEffect(() => {
+    // Initial load of emotion records
+    refreshEmotionRecords()
+
+    // Add focus event listener to refresh data when user returns to the page
+    const handleFocus = () => {
+      refreshEmotionRecords()
+    }
+
+    // Add visibility change listener to refresh when page becomes visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refreshEmotionRecords()
+      }
+    }
+
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    // Cleanup event listeners
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [])
 
   const refreshEmotionTypes = () => {
@@ -49,7 +76,14 @@ export default function RecordsPage() {
 
   const handleDateSelect = (date: string) => {
     setSelectedDate(date)
-    setShowSidebar(true)
+    
+    // If the date has existing emotion records, show the sidebar
+    if (emotionRecords[date] && emotionRecords[date].conversations.length > 0) {
+      setShowSidebar(true)
+    } else {
+      // If no records exist for this date, show the sidebar with option to create new record
+      setShowSidebar(true)
+    }
   }
 
   const closeSidebar = () => {
@@ -57,21 +91,34 @@ export default function RecordsPage() {
     setSelectedDate(null)
   }
 
-  // 统计数据
-  const totalConversations = getEmotionConversations().length
-  const releasedCount = getEmotionConversations().filter(c => c.isReleased).length
-  const uniqueDays = Object.keys(emotionRecords).length
-
-  // 最近的情绪趋势
-  const recentEmotions = getEmotionConversations()
-    .slice(-7)
-    .map(c => ({ emotion: c.emotion, date: c.createdAt.split('T')[0] }))
+  // Calculate statistics from emotion records state for consistency
+  const { totalConversations, releasedCount, uniqueDays, recentEmotions } = useMemo(() => {
+    const allConversations = Object.values(emotionRecords).flatMap(record => record.conversations || [])
+    
+    return {
+      totalConversations: allConversations.length,
+      releasedCount: allConversations.filter(c => c.isReleased).length,
+      uniqueDays: Object.keys(emotionRecords).length,
+      recentEmotions: allConversations
+        .slice(-7)
+        .map(c => ({ emotion: c.emotion, date: c.createdAt.split('T')[0] }))
+    }
+  }, [emotionRecords])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-50 to-pink-100">
       {/* Header */}
       <div className="p-6 flex items-center justify-end">
         <div className="flex gap-3">
+          <Button
+            onClick={refreshEmotionRecords}
+            variant="outline"
+            size="sm"
+            className="text-gray-600 hover:text-gray-800"
+          >
+            <RotateCcw className="w-4 h-4 mr-2" />
+            刷新记录
+          </Button>
           <CustomEmotionManager onEmotionAdded={refreshEmotionTypes} />
           <Link href="/release">
             <Button
