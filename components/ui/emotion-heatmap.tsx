@@ -11,13 +11,14 @@ export function EmotionHeatmap({ className = "" }: EmotionHeatmapProps) {
   // 获取过去52周的日期数据（364天）
   const getWeeksData = () => {
     const weeks = []
-    const today = new Date()
+    // 使用固定的基准日期 2025-05-28
+    const baseDate = new Date('2025-05-28')
     
-    // 计算从今天开始往前364天
+    // 计算从基准日期开始往前364天
     for (let weekIndex = 51; weekIndex >= 0; weekIndex--) {
       const week = []
       for (let dayIndex = 6; dayIndex >= 0; dayIndex--) {
-        const date = new Date(today)
+        const date = new Date(baseDate)
         date.setDate(date.getDate() - (weekIndex * 7 + dayIndex))
         week.unshift(date.toISOString().split('T')[0])
       }
@@ -116,10 +117,11 @@ export function EmotionHeatmap({ className = "" }: EmotionHeatmapProps) {
   // 生成月份标签
   const getMonthLabels = () => {
     const labels = []
-    const today = new Date()
+    // 使用固定的基准日期
+    const baseDate = new Date('2025-05-28')
     
     for (let i = 11; i >= 0; i--) {
-      const month = new Date(today)
+      const month = new Date(baseDate)
       month.setMonth(month.getMonth() - i)
       labels.push(month.toLocaleDateString('zh-CN', { month: 'short' }))
     }
@@ -127,69 +129,71 @@ export function EmotionHeatmap({ className = "" }: EmotionHeatmapProps) {
     return labels
   }
 
+  // 检查今天是否为基准日期
+  const isToday = (date: string) => {
+    return date === '2025-05-28'
+  }
+
   return (
     <div className={`${className}`}>
       <div className="overflow-x-auto">
         {/* 月份标签 */}
-        <div className="flex justify-between text-xs text-gray-500 mb-2 min-w-max">
+        <div className="flex justify-between text-xs text-gray-500 mb-2 min-w-max ml-8">
           {getMonthLabels().map((month, i) => (
             <span key={i} className="w-8 text-center">{month}</span>
           ))}
         </div>
 
-        {/* 热力图网格 */}
+        {/* 热力图网格容器 */}
         <div className="flex gap-1 min-w-max">
-          {weeksData.map((week, weekIndex) => (
-            <div key={weekIndex} className="flex flex-col gap-1">
-              {week.map((date, dayIndex) => {
-                const { style, hoverStyle, tooltip } = getDateInfo(date)
-                const isToday = date === new Date().toISOString().split('T')[0]
-                
-                return (
-                  <motion.div
-                    key={date}
-                    className={`w-3 h-3 rounded-sm border border-gray-200 cursor-pointer transition-all duration-200 ${
-                      isToday ? 'ring-2 ring-blue-400 ring-offset-1' : ''
-                    }`}
-                    style={style}
-                    title={`${formatTooltipDate(date)}: ${tooltip}`}
-                    onMouseEnter={(e) => {
-                      Object.assign(e.currentTarget.style, hoverStyle)
-                    }}
-                    onMouseLeave={(e) => {
-                      Object.assign(e.currentTarget.style, style)
-                    }}
-                    whileHover={{ scale: 1.2 }}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: (weekIndex * 7 + dayIndex) * 0.002 }}
-                  />
-                )
-              })}
+          {/* 周标签（左侧Y轴） */}
+          <div className="flex flex-col gap-1 mr-2 justify-center">
+            <div className="w-6 h-3 flex items-center">
+              <span className="text-xs text-gray-500">周一</span>
             </div>
-          ))}
-        </div>
-
-        {/* 周标签和图例 */}
-        <div className="flex items-center justify-between mt-3">
-          <div className="flex items-center gap-1 text-xs text-gray-500">
-            <span>周一</span>
-            <div className="w-px h-3 bg-gray-300 mx-1"></div>
-            <span>周三</span>
-            <div className="w-px h-3 bg-gray-300 mx-1"></div>
-            <span>周五</span>
+            <div className="w-6 h-3"></div>
+            <div className="w-6 h-3 flex items-center">
+              <span className="text-xs text-gray-500">周三</span>
+            </div>
+            <div className="w-6 h-3"></div>
+            <div className="w-6 h-3 flex items-center">
+              <span className="text-xs text-gray-500">周五</span>
+            </div>
+            <div className="w-6 h-3"></div>
+            <div className="w-6 h-3"></div>
           </div>
-          
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <span>少</span>
-            <div className="flex gap-1">
-              <div className="w-3 h-3 rounded-sm bg-gray-100 border border-gray-200"></div>
-              <div className="w-3 h-3 rounded-sm bg-green-200 border border-gray-200"></div>
-              <div className="w-3 h-3 rounded-sm bg-green-300 border border-gray-200"></div>
-              <div className="w-3 h-3 rounded-sm bg-green-400 border border-gray-200"></div>
-              <div className="w-3 h-3 rounded-sm bg-green-500 border border-gray-200"></div>
-            </div>
-            <span>多</span>
+
+          {/* 热力图网格 */}
+          <div className="flex gap-1">
+            {weeksData.map((week, weekIndex) => (
+              <div key={weekIndex} className="flex flex-col gap-1">
+                {week.map((date, dayIndex) => {
+                  const { style, hoverStyle, tooltip } = getDateInfo(date)
+                  const isTodayDate = isToday(date)
+                  
+                  return (
+                    <motion.div
+                      key={date}
+                      className={`w-3 h-3 rounded-sm border border-gray-200 cursor-pointer transition-all duration-200 ${
+                        isTodayDate ? 'ring-2 ring-blue-400 ring-offset-1' : ''
+                      }`}
+                      style={style}
+                      title={`${formatTooltipDate(date)}: ${tooltip}`}
+                      onMouseEnter={(e) => {
+                        Object.assign(e.currentTarget.style, hoverStyle)
+                      }}
+                      onMouseLeave={(e) => {
+                        Object.assign(e.currentTarget.style, style)
+                      }}
+                      whileHover={{ scale: 1.2 }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: (weekIndex * 7 + dayIndex) * 0.002 }}
+                    />
+                  )
+                })}
+              </div>
+            ))}
           </div>
         </div>
       </div>
