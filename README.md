@@ -68,7 +68,7 @@
 - **样式框架**：Tailwind CSS
 - **动画库**：Framer Motion
 - **图标库**：Lucide React
-- **AI服务**：OpenRouter API (DeepSeek模型)
+- **AI服务**：OpenRouter API (Google Gemini 2.0 Flash)
 - **部署平台**：Vercel
 
 ## 📱 页面结构
@@ -114,9 +114,19 @@ npm start
 
 ## 🌐 环境变量
 
-\`\`\`env
-OPENROUTER_API_KEY=your_openrouter_api_key
-\`\`\`
+创建 `.env.local` 文件并添加以下配置：
+
+```env
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+```
+
+**获取 OpenRouter API 密钥：**
+
+1. 访问 [OpenRouter](https://openrouter.ai/)
+2. 注册账户并获取 API 密钥
+3. 将密钥添加到 `.env.local` 文件中
+
+**当前使用的AI模型：** Google Gemini 2.0 Flash (速度更快，响应更及时)
 
 ## 🎨 设计亮点
 
@@ -156,6 +166,30 @@ OPENROUTER_API_KEY=your_openrouter_api_key
 - [ ] 社区分享功能
 - [ ] 推送通知提醒
 - [ ] 多语言支持
+
+## 📝 更新日志
+
+### v1.1.0 (2025-05-28)
+
+**🎨 界面优化**
+- 优化情绪气球颜色配置，解决焦虑和困惑颜色相似问题
+- 焦虑：改为黄褐色到黄色渐变 (`from-amber-400 to-yellow-600`)
+- 困惑：改为靛蓝色到灰石色渐变 (`from-indigo-400 to-slate-600`)
+
+**⚡ 性能提升**
+- 升级AI模型从DeepSeek Chat v3切换到Google Gemini 2.0 Flash
+- 显著提升AI响应速度和质量
+- 优化流式响应处理机制
+
+**🔧 技术改进**
+- 更新OpenRouter API配置
+- 完善环境变量配置说明
+- 优化错误处理和降级机制
+
+**📚 文档更新**
+- 增加详细的API密钥配置指南
+- 完善部署和开发说明
+- 更新技术栈信息
 
 ## 💝 致谢
 
