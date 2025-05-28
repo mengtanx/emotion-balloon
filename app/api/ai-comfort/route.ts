@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 - 避免说教，多用提问引导思考
 - 用简洁易懂的语言，避免过于专业的术语
 - 保持希望和乐观，但要现实
-- 回复长度控制在150-250字
+- 回复长度控制在250字以内
 - 如果用户情况严重，建议寻求专业心理健康服务
 
 回应示例：
@@ -51,7 +51,8 @@ export async function POST(request: NextRequest) {
 - 每次回应都要体现CBT的核心理念
 
 当前用户的情绪状态是：${emotion}
-请基于认知行为疗法的原则，用关爱和专业的方式回应用户。`,
+请基于认知行为疗法的原则，用关爱和专业的方式回应用户。
+回复注意适当分段分要点，让回复更加易读。`,
       },
       ...conversationHistory.map((msg: any) => ({
         role: msg.type === 'user' ? 'user' : 'assistant',
