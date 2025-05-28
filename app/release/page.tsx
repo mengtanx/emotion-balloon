@@ -229,13 +229,13 @@ export default function ReleasePage() {
             {/* 气球动画 */}
             <motion.div
               initial={{ 
-                x: "calc(50% - 48px)", 
+                x: "50%", 
                 y: "calc(100vh - 120px)", 
                 scale: 1,
                 rotate: 0
               }}
               animate={{ 
-                x: "calc(50% - 48px)",
+                x: "50%",
                 y: "-120px", 
                 scale: [1, 1.1, 0.8, 0],
                 rotate: [0, -3, 3, -2, 2, 0]
@@ -245,7 +245,7 @@ export default function ReleasePage() {
                 times: [0, 0.3, 0.8, 1],
                 ease: [0.25, 0.46, 0.45, 0.94]
               }}
-              className="absolute"
+              className="absolute left-1/2 transform -translate-x-1/2"
             >
               <div
                 className={`w-24 h-32 bg-gradient-to-b ${
@@ -362,14 +362,7 @@ export default function ReleasePage() {
       </AnimatePresence>
 
       {/* Header */}
-      <div className="p-6 flex items-center justify-between">
-        <Link href="/">
-          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-800">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            返回首页
-          </Button>
-        </Link>
-        
+      <div className="p-6 flex items-center justify-end">
         {conversation && (
           <Button
             onClick={resetConversation}

@@ -12,31 +12,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-50 to-pink-100">
-      {/* Navigation */}
-      <nav className="p-6 flex justify-between items-center">
-        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full flex items-center justify-center">
-            <Heart className="w-4 h-4 text-white" />
-          </div>
-          <span className="text-xl font-semibold text-gray-800">情绪气球</span>
-        </motion.div>
-
-        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex gap-4">
-          <Link href="/records">
-            <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-800">
-              <Calendar className="w-4 h-4 mr-2" />
-              情绪记录
-            </Button>
-          </Link>
-          <Link href="/about">
-            <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-800">
-              <Info className="w-4 h-4 mr-2" />
-              关于
-            </Button>
-          </Link>
-        </motion.div>
-      </nav>
-
       {/* Welcome Animation */}
       {showWelcome && (
         <motion.div

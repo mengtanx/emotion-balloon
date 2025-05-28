@@ -55,27 +55,44 @@ export function EmotionHeatmap({ className = "" }: EmotionHeatmapProps) {
     
     // 使用最近的情绪作为主色调
     const mainEmotion = emotions[emotions.length - 1]
-    const baseColor = getEmotionColor(mainEmotion)
     
     // 根据记录数量调整强度
     const intensity = Math.min(count, 4)
     
-    // 颜色映射到具体的RGB值
-    const colorValues: Record<string, string[]> = {
-      'from-red-400': ['#fca5a5', '#f87171', '#ef4444', '#dc2626'],
-      'from-blue-400': ['#93c5fd', '#60a5fa', '#3b82f6', '#2563eb'],
-      'from-yellow-400': ['#fde047', '#facc15', '#eab308', '#ca8a04'],
-      'from-green-400': ['#86efac', '#4ade80', '#22c55e', '#16a34a'],
-      'from-purple-400': ['#c084fc', '#a855f7', '#9333ea', '#7c3aed'],
-      'from-pink-400': ['#f9a8d4', '#f472b6', '#ec4899', '#db2777'],
-      'from-indigo-400': ['#a5b4fc', '#818cf8', '#6366f1', '#4f46e5'],
-      'from-amber-400': ['#fcd34d', '#f59e0b', '#d97706', '#b45309'],
-      'from-gray-400': ['#d1d5db', '#9ca3af', '#6b7280', '#4b5563']
+    // 获取情绪颜色
+    const emotionColor = getEmotionColor(mainEmotion)
+    
+    // 颜色映射到具体的RGB值 - 根据实际情绪类型
+    const emotionColorValues: Record<string, string[]> = {
+      'angry': ['#fca5a5', '#f87171', '#ef4444', '#dc2626'],      // 愤怒 - 红色
+      'sad': ['#93c5fd', '#60a5fa', '#3b82f6', '#2563eb'],        // 悲伤 - 蓝色  
+      'anxious': ['#fcd34d', '#f59e0b', '#d97706', '#b45309'],    // 焦虑 - 琥珀色
+      'happy': ['#86efac', '#4ade80', '#22c55e', '#16a34a'],      // 快乐 - 绿色
+      'calm': ['#c084fc', '#a855f7', '#9333ea', '#7c3aed'],       // 平静 - 紫色
+      'confused': ['#a5b4fc', '#818cf8', '#6366f1', '#4f46e5'],   // 困惑 - 靛蓝色
     }
     
-    // 找到匹配的颜色组
-    const colorKey = Object.keys(colorValues).find(key => baseColor.includes(key)) || 'from-blue-400'
-    const colors = colorValues[colorKey]
+    // 对于自定义情绪，从emotionColor中提取颜色
+    let colors = emotionColorValues[mainEmotion]
+    
+    if (!colors) {
+      // 从CSS class中解析颜色 - 使用默认蓝色系列
+      colors = emotionColorValues['sad']
+      
+      // 如果能识别颜色类型，使用对应颜色系列
+      if (emotionColor.includes('red')) {
+        colors = emotionColorValues['angry']
+      } else if (emotionColor.includes('green')) {
+        colors = emotionColorValues['happy']
+      } else if (emotionColor.includes('purple')) {
+        colors = emotionColorValues['calm']
+      } else if (emotionColor.includes('yellow') || emotionColor.includes('amber')) {
+        colors = emotionColorValues['anxious']
+      } else if (emotionColor.includes('indigo')) {
+        colors = emotionColorValues['confused']
+      }
+    }
+    
     const color = colors[intensity - 1]
     const hoverColor = colors[Math.min(intensity, 3)] // hover时稍微深一点
     

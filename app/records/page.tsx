@@ -70,13 +70,7 @@ export default function RecordsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-50 to-pink-100">
       {/* Header */}
-      <div className="p-6 flex items-center justify-between">
-        <Link href="/">
-          <Button variant="ghost" size="sm" className="text-gray-600 hover:text-gray-800">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            返回首页
-          </Button>
-        </Link>
+      <div className="p-6 flex items-center justify-end">
         <div className="flex gap-3">
           <CustomEmotionManager onEmotionAdded={refreshEmotionTypes} />
           <Link href="/release">
@@ -185,7 +179,7 @@ export default function RecordsPage() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
               {emotionTypes.map((emotion) => (
                 <div key={emotion.value} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
-                  <div className={`w-4 h-4 rounded-full ${getEmotionColor(emotion.value)}`}></div>
+                  <div className={`w-4 h-4 rounded-full bg-gradient-to-br ${emotion.color}`}></div>
                   <span className="text-sm text-gray-700">{emotion.name}</span>
                 </div>
               ))}
@@ -210,7 +204,7 @@ export default function RecordsPage() {
                     key={index}
                     className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg"
                   >
-                    <div className={`w-3 h-3 rounded-full ${getEmotionColor(item.emotion)}`}></div>
+                    <div className={`w-3 h-3 rounded-full bg-gradient-to-br ${emotionTypes.find(e => e.value === item.emotion)?.color || 'from-gray-400 to-gray-600'}`}></div>
                     <span className="text-sm text-gray-600">{getEmotionName(item.emotion)}</span>
                     <span className="text-xs text-gray-400">
                       {new Date(item.date).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })}

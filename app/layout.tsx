@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import Navigation from '@/components/ui/navigation'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -21,7 +22,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <Navigation />
+        {children}
+      </body>
     </html>
   )
 }
