@@ -153,21 +153,21 @@
 
 **修复前（错误逻辑）：**
 
-```javascript
+\`\`\`javascript
 // 错误：这会导致月份计算错误
 const prevMonth = new Date(year, month - 1, 0)
 prevMonthDates.push(formatDateToLocal(new Date(year, month - 1, day)))
-```
+\`\`\`
 
 **修复后（正确逻辑）：**
 
-```javascript
+\`\`\`javascript
 // 正确：使用准确的年月计算
 const prevMonth = new Date(year, month, 0) // 获取当前月的前一天，即上个月最后一天
 const prevMonthYear = month === 0 ? year - 1 : year
 const prevMonthIndex = month === 0 ? 11 : month - 1
 prevMonthDates.push(formatDateToLocal(new Date(prevMonthYear, prevMonthIndex, day)))
-```
+\`\`\`
 
 ### 技术修复
 
